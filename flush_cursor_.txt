@@ -1,0 +1,50 @@
+*** before flush ***
+old   2: FROM gv$sqlarea WHERE sql_id = '&&sql_id.' ORDER BY 1
+new   2: FROM gv$sqlarea WHERE sql_id = '' ORDER BY 1
+SELECT inst_id, loaded_versions, invalidations, address, hash_value
+*
+ERROR at line 1:
+ORA-02396: exceeded maximum idle time, please connect again 
+
+
+old   2: FROM gv$sql WHERE sql_id = '&&sql_id.' ORDER BY 1, 2
+new   2: FROM gv$sql WHERE sql_id = '' ORDER BY 1, 2
+SELECT inst_id, child_number, plan_hash_value, executions, is_shareable
+*
+ERROR at line 1:
+ORA-01012: not logged on 
+Process ID: 44403 
+Session ID: 8093 Serial number: 53155 
+
+
+old   3:  FROM gv$sqlarea WHERE sql_id = '&&sql_id.')
+new   3:  FROM gv$sqlarea WHERE sql_id = '')
+BEGIN
+*
+ERROR at line 1:
+ORA-01012: not logged on 
+Process ID: 44403 
+Session ID: 8093 Serial number: 53155 
+
+
+*** after flush ***
+old   2: FROM gv$sqlarea WHERE sql_id = '&&sql_id.' ORDER BY 1
+new   2: FROM gv$sqlarea WHERE sql_id = '' ORDER BY 1
+SELECT inst_id, loaded_versions, invalidations, address, hash_value
+*
+ERROR at line 1:
+ORA-01012: not logged on 
+Process ID: 44403 
+Session ID: 8093 Serial number: 53155 
+
+
+old   2: FROM gv$sql WHERE sql_id = '&&sql_id.' ORDER BY 1, 2
+new   2: FROM gv$sql WHERE sql_id = '' ORDER BY 1, 2
+SELECT inst_id, child_number, plan_hash_value, executions, is_shareable
+*
+ERROR at line 1:
+ORA-01012: not logged on 
+Process ID: 44403 
+Session ID: 8093 Serial number: 53155 
+
+
