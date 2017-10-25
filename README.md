@@ -1,3 +1,3 @@
 # Oracle_Scripts
 
-Scripts
+Refer help.sql file.
