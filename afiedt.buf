@@ -1,0 +1,2 @@
+select inst_id,username,service_name,count(1) from gv$session where service_name like '%SRV%' group by inst_id,username,service_name order by 1
+/
