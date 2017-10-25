@@ -1,0 +1,113 @@
+SQL>@sql-analysis
+Enter sql_id: 4w4jnsa0rr7nu
+Enter plan_hash_value (all if null): 
+Enter # days to check (7 if null)  : 360
+
+========================================================
+SQL Statement
+========================================================
+
+select sku_item_key, count(sku_item_key)
+from pos_line_item
+where sku_item_key = 1
+group by sku_item_key
+order by sku_item_key
+
+
+========================================================
+Degraded plan info - Std Deviation (using averages)
+========================================================
+
+ Inst#        Execs         Max       Std Dev
+------ ------------ ----------- -------------
+     1            3      682.62         .0000
+
+========================================================
+Degraded plan info - Best and worst avg times per PHV
+========================================================
+
+      Plan HV        Execs         Min         Max
+------------- ------------ ----------- -----------
+   1438513425            2    1,015.39    1,015.39
+   1150465824            1       17.09       17.09
+
+========================================================
+AWR history details
+========================================================
+
+   Snap# Snap Time         Inst#       Plan HV        Execs         Avg PIO         Avg LIO        Avg Rows        Avg Time         Avg CPU          Avg IO       Avg Clust
+-------- ---------------- ------ ------------- ------------ --------------- --------------- --------------- --------------- --------------- --------------- ---------------
+    8353 04/12/2012 13:30      1    1150465824            1        40084487        40084611               0              17               3              15               0
+    8353 04/12/2012 13:30      1    1438513425            2        84810080        84866835               1            1015               6            1011               0
+
+========================================================
+Detailed execution plans for best and worst
+
+Get PHVs from Degraded plan info best/worst above
+========================================================
+Enter the phv with the best elapsed time: 1150465824
+Enter the phv with the worst elapsed time:1438513425
+
+******* B E S T   P L A N *******
+
+Plan hash value: 1150465824
+
+---------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name                        | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+---------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |                             |       |       |    23M(100)|          |       |       |
+|   1 |  SORT GROUP BY NOSORT       |                             |     1 |     6 |    23M  (1)| 76:51:58 |       |       |
+|   2 |   PARTITION RANGE ALL       |                             |   106K|   624K|    23M  (1)| 76:51:58 |     1 |     3 |
+|   3 |    TABLE ACCESS STORAGE FULL| DWB_RTL_SLS_RETRN_LINE_ITEM |   106K|   624K|    23M  (1)| 76:51:58 |     1 |     3 |
+---------------------------------------------------------------------------------------------------------------------------
+
+Query Block Name / Object Alias (identified by operation id):
+-------------------------------------------------------------
+
+   1 - SEL$9FB2EC53
+   3 - SEL$9FB2EC53 / POS_LINE_ITEM@SEL$1
+
+
+******* W O R S T   P L A N *******
+
+Plan hash value: 1438513425
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name                        | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |    TQ  |IN-OUT| PQ Distrib |
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |                             |       |       |   581K(100)|          |       |       |        |      |            |
+|   1 |  HASH GROUP BY                |                             |     1 |     6 |   581K  (1)| 01:56:22 |       |       |        |      |            |
+|   2 |   PX COORDINATOR              |                             |       |       |            |          |       |       |        |      |            |
+|   3 |    PX SEND QC (RANDOM)        | :TQ10000                    |   106K|   624K|   581K  (1)| 01:56:22 |       |       |  Q1,00 | P->S | QC (RAND)  |
+|   4 |     PX BLOCK ITERATOR         |                             |   106K|   624K|   581K  (1)| 01:56:22 |     1 |     3 |  Q1,00 | PCWC |            |
+|   5 |      TABLE ACCESS STORAGE FULL| DWB_RTL_SLS_RETRN_LINE_ITEM |   106K|   624K|   581K  (1)| 01:56:22 |     1 |     3 |  Q1,00 | PCWP |            |
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Query Block Name / Object Alias (identified by operation id):
+-------------------------------------------------------------
+
+   1 - SEL$9FB2EC53
+   5 - SEL$9FB2EC53 / POS_LINE_ITEM@SEL$1
+
+Automatic Degree of Parallelism Information:
+--------------------------------------------
+
+   - Degree of Parallelism of 44 is derived from scan of object WORKSHOP.DWB_RTL_SLS_RETRN_LINE_ITEM
+
+Note
+-----
+   - automatic DOP: Computed Degree of Parallelism is 44
+
+
+========================================================
+Plan differences (from outline hints) for best and worst
+========================================================
+
+      Plan HV HINT
+------------- ------------------------------------------------------
+   1438513425 OPT_PARAM('optimizer_dynamic_sampling' 8)
+              SHARED(44)
+              USE_HASH_AGGREGATION(@"SEL$9FB2EC53")
+
+
+========================================================

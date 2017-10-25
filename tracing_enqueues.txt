@@ -1,0 +1,159 @@
+$ORACLE_HOME/rdbms/mesg/oraus.msg shows all errors, events
+
+10704 is used to trace local enqueues
+10706 is used to trace global enqueues
+
+10704 can be combined with 10046.
+
+Three types of opertions:
+lock get - ksqgtl - kernel service enqueue get lock
+lock release - ksqrcl - kernel service enqueue release client lock
+lock convert - ksqcmi - this function is used for converting lock value internally
+
+example of 10704
+
+session 1: lock table t in share mode;
+
+session 2:
+alter session set events '10046 trace name context forever, level 12';
+alter session set events '10704 trace name context forever, level 4';
+alter table t move;
+
+#####################################################################################################################
+
+Trace file /app/oracle/admin/CSQC2/diag/rdbms/csqc2dv1/CSQC2DV1/trace/CSQC2DV1_ora_59965670.trc
+Oracle Database 11g Enterprise Edition Release 11.2.0.2.0 - 64bit Production
+With the Partitioning option
+ORACLE_HOME = /app/oracle/product/11.2.2
+System name:    AIX
+Node name:      fh3057
+Release:        1
+Version:        6
+Machine:        00F62CAC4C00
+Instance name: CSQC2DV1
+Redo thread mounted by this instance: 1
+Oracle process number: 24
+Unix process pid: 59965670, image: oracle@fh3057
+
+
+*** 2010-12-29 14:56:04.586
+*** SESSION ID:(10.4923) 2010-12-29 14:56:04.587
+*** CLIENT ID:() 2010-12-29 14:56:04.587
+*** SERVICE NAME:(SYS$USERS) 2010-12-29 14:56:04.587
+*** MODULE NAME:(SQL*Plus) 2010-12-29 14:56:04.587
+*** ACTION NAME:() 2010-12-29 14:56:04.587
+
+WAIT #4572577880: nam='SQL*Net message to client' ela= 4 driver id=1413697536 #bytes=1 p3=0 obj#=-1 tim=6999080002659
+WAIT #4572577880: nam='SQL*Net message from client' ela= 4184 driver id=1413697536 #bytes=1 p3=0 obj#=-1 tim=6999080124177
+CLOSE #4572577880:c=0,e=12,dep=0,type=1,tim=6999080127696
+=====================
+PARSING IN CURSOR #4572931320 len=68 dep=0 uid=5 oct=42 lid=5 tim=6999080131692 hv=3630871433 ad='0' sqlid='3bt4jmbc6pcw9'
+alter session set events '10704 trace name context forever, level 4'
+END OF STMT
+PARSE #4572931320:c=0,e=131,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=0,plh=0,tim=6999080131691
+EXEC #4572931320:c=0,e=2571,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=0,plh=0,tim=6999080147002
+WAIT #4572931320: nam='SQL*Net message to client' ela= 3 driver id=1413697536 #bytes=1 p3=0 obj#=-1 tim=6999080149196
+WAIT #4572931320: nam='SQL*Net message from client' ela= 3033 driver id=1413697536 #bytes=1 p3=0 obj#=-1 tim=6999080153311
+CLOSE #4572931320:c=0,e=9,dep=0,type=1,tim=6999080155729
+XCTEND rlbk=0, rd_only=1, tim=6999080158242
+ksqgtl *** CU-13ace158-07000000 mode=6 flags=0x10010 timeout=300 ***
+ksqgtl: xcb=0x700000029377730, ktcdix=2147483647, topxcb=0x700000029377730
+        ktcipt(topxcb)=0x0
+ksucti: init txn DID from session DID
+ksqgtl:
+        ksqlkdid: 0001-0018-00001D9D
+*** ksudidTrace: ksqgtl
+        ktcmydid(): 0001-0018-00001D9D
+        ksusesdi:   0000-0000-00000000
+        ksusetxn:   0001-0018-00001D9D
+ksqgtl: RETURNS 0
+ksqrcl: CU,13ace158,7000000
+ksqrcl: returns 0
+=====================
+PARSING IN CURSOR #4572890768 len=88 dep=1 uid=0 oct=3 lid=0 tim=6999080398820 hv=705151927 ad='70000001ba809b0' sqlid='0uxx9n
+0p0ghxr'
+select count(FA#) from SYS_FBA_TRACKEDTABLES where OBJ# = 77652 and bitand(FLAGS, 128)=0
+END OF STMT
+PARSE #4572890768:c=0,e=27122,p=0,cr=0,cu=0,mis=1,r=0,dep=1,og=4,plh=3224117913,tim=6999080398819
+EXEC #4572890768:c=0,e=73,p=0,cr=0,cu=0,mis=0,r=0,dep=1,og=4,plh=3224117913,tim=6999080475461
+WAIT #4572890768: nam='db file sequential read' ela= 48517 file#=1 block#=28114 blocks=1 obj#=48474 tim=6999080572363
+FETCH #4572890768:c=0,e=80581,p=1,cr=1,cu=0,mis=0,r=1,dep=1,og=4,plh=3224117913,tim=6999080604373
+STAT #4572890768 id=1 cnt=1 pid=0 pos=1 obj=0 op='SORT AGGREGATE (cr=1 pr=1 pw=0 time=80551 us)'
+STAT #4572890768 id=2 cnt=0 pid=1 pos=1 obj=48473 op='TABLE ACCESS BY INDEX ROWID SYS_FBA_TRACKEDTABLES (cr=1 pr=1 pw=0 time=8
+0527 us cost=1 size=7 card=1)'
+STAT #4572890768 id=3 cnt=0 pid=2 pos=1 obj=48474 op='INDEX UNIQUE SCAN SYS_C004254 (cr=1 pr=1 pw=0 time=80522 us cost=0 size=
+0 card=1)'
+ksqgtl *** CU-1de46fe0-07000000 mode=6 flags=0x10010 timeout=300 ***
+ksqgtl: xcb=0x700000029377730, ktcdix=2147483647, topxcb=0x700000029377730
+        ktcipt(topxcb)=0x0
+ksucti: init session DID from txn DID:
+ksqgtl:
+        ksqlkdid: 0001-0018-00001D9D
+*** ksudidTrace: ksqgtl
+        ktcmydid(): 0001-0018-00001D9D
+        ksusesdi:   0000-0000-00000000
+        ksusetxn:   0001-0018-00001D9D
+ksqgtl: RETURNS 0
+ksqrcl: CU,1de46fe0,7000000
+ksqrcl: returns 0
+=====================
+PARSING IN CURSOR #4572887808 len=41 dep=1 uid=5 oct=26 lid=5 tim=6999080758845 hv=2637997847 ad='70000001eb073c0' sqlid='6a5d
+gqffmt9sr'
+LOCK TABLE "T" IN EXCLUSIVE MODE  NOWAIT
+END OF STMT
+PARSE #4572887808:c=0,e=73836,p=0,cr=0,cu=0,mis=1,r=0,dep=1,og=1,plh=0,tim=6999080758844
+ksqgtl *** TM-00012f54-00000000 mode=6 flags=0x401 timeout=0 ***
+ksqgtl: xcb=0x700000029377730, ktcdix=2147483647, topxcb=0x700000029377730
+        ktcipt(topxcb)=0x0
+ksucti: init session DID from txn DID:
+ksqgtl:
+        ksqlkdid: 0001-0018-00001D9D
+*** ksudidTrace: ksqgtl
+        ktcmydid(): 0001-0018-00001D9D
+        ksusesdi:   0000-0000-00000000
+        ksusetxn:   0001-0018-00001D9D
+ksqcmi: TM,12f54,0 mode=6 timeout=0
+ksqcmi: returns 51
+ksqgtl: RETURNS 51
+ksqrcl: returns 0
+EXEC #4572887808:c=0,e=28517,p=0,cr=0,cu=0,mis=0,r=0,dep=1,og=1,plh=0,tim=6999080813342
+ERROR #3:err=54 tim=6999080814806
+CLOSE #4572887808:c=0,e=18,dep=1,type=0,tim=6999080816597
+=====================
+PARSE ERROR #4572930152:len=18 dep=0 uid=5 oct=15 lid=5 tim=6999080818412 err=54
+alter table t move
+WAIT #4572930152: nam='SQL*Net break/reset to client' ela= 5 driver id=1413697536 break?=1 p3=0 obj#=48474 tim=6999080823401
+WAIT #4572930152: nam='SQL*Net break/reset to client' ela= 610 driver id=1413697536 break?=0 p3=0 obj#=48474 tim=6999080826405
+WAIT #4572930152: nam='SQL*Net message to client' ela= 3 driver id=1413697536 #bytes=1 p3=0 obj#=48474 tim=6999080827842
+$
+
+
+#########################################################################################
+
+ksqgtl *** TM-00012f54-00000000
+ksqgtl: RETURNS 51
+ERROR #3:err=54
+
+
+SQL> @hex 00012f54
+
+                        DEC                  HEX
+--------------------------- --------------------
+               77652.000000                12F54
+
+SQL> @oid 77652
+
+owner                     object_name                    object_type        CREATED           LAST_DDL_TIME     status    DATA_OBJECT_ID
+------------------------- ------------------------------ ------------------ ----------------- ----------------- --------- --------------
+SYSTEM                    T                              TABLE              20101229 11:07:54 20101229 11:07:54 VALID              77652
+
+
+SQL> select * from v$lock where type='TM';
+
+ADDR             KADDR                   SID TY        ID1        ID2      LMODE    REQUEST      CTIME      BLOCK
+---------------- ---------------- ---------- -- ---------- ---------- ---------- ---------- ---------- ----------
+00000001109111C0 0000000110911220        591 TM      77652          0          4          0        815          0
+
+
+
+
