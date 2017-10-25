@@ -1,0 +1,3 @@
+prompt Gather Schema Statistics for table &1....
+
+exec dbms_stats.gather_schema_stats('&1', degree=>16, method_opt=>'FOR ALL INDEXED COLUMNS SIZE 254', cascade=>true, granularity=>'ALL');
