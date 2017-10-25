@@ -1,0 +1,75 @@
+@reg - registry
+
+@exadata/cellver
+
+@asmdg
+@asmls
+
+x$kffxp <- asm logical to physical mapping cached in sga
+
+v$cell_thread_history is like ash for cell server
+cth.sql - have last 10 minutes of data. working status means on cpu
+
+@sqlid
+@sqlidx
+
+v$iostat_function_details - io types by processes
+
+cellio.sql
+
+x$kcboqh - buffers in buffer cache per segment
+
+@kcbbes - checkpoint reasons and buffer counts
+
+cellsrvstat - statspack for cell server
+
+@ash/event_hist
+
+list topcpu 2 ,16,6000 detail - most expensive cpu consuming sql statements
+
+@sp - spfile parameter set
+
+@ash/shortmon log - short wait event monitor 
+
+In Exadata, access predicate is a filter predicate for table.
+
+Real Time SQL Monitoring duration -> start of execution to last fetch (includes fetch time)
+
+Each sample in sql monitoring is approx 1 second.
+
+elapsed time is not duration but it is database time (fetch is not included).
+
+Time Active -> Timeline -> When particular line was started and when was it active
+							 Active -> when it was started
+							 Duration -> how long it ran
+							 
+11.2.0.4 -> has flash cache write metrics. until 11.2.0.3 flash cache writes were included in 
+flash cache read.
+
+iostat:
+avgqu-sz -> queue length -> number of requests queued up in devices
+await -> IO wait before its serviced
+
+@event_hist.sql
+@event_hist_cell.sql
+@ashtop.sql
+
+exastat.py -> reports storage cell metrics little bit better.
+
+Flash:
+flash behaviour has changed in latest version.
+@exadata/cellpd
+
+cell smart flash unkeep -> flush or invalidate flash cache -> when we see this wait event its waiting
+for flash invalidation to complete.
+
+smart scan by pass flash cache unless cell_flash_cache is KEEP (large IO).
+
+write back flash cache is mirrored.
+
+
+
+
+
+
+
