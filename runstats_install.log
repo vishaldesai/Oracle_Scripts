@@ -1,0 +1,317 @@
+VDESAI@csload > --
+VDESAI@csload > DROP TABLE run_stats;
+DROP TABLE run_stats
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+VDESAI@csload > --
+VDESAI@csload > CREATE GLOBAL TEMPORARY TABLE run_stats
+  2    (
+  3  	 runid varchar2(15),
+  4  	 name varchar2(80),
+  5  	 value int
+  6    )
+  7  ON COMMIT PRESERVE ROWS;
+
+Table created.
+
+VDESAI@csload > --
+VDESAI@csload > CREATE OR REPLACE VIEW stats
+  2  AS
+  3  SELECT
+  4    'STAT...' || a.name name, b.value
+  5  FROM
+  6    v$statname a,
+  7    v$mystat b
+  8  WHERE
+  9    a.statistic# = b.statistic#
+ 10  UNION ALL
+ 11  SELECT
+ 12    'LATCH.' || name,  gets
+ 13  FROM
+ 14    v$latch
+ 15  UNION ALL
+ 16  SELECT
+ 17    'STAT...Elapsed Time',
+ 18    hsecs
+ 19  FROM
+ 20    v$timer;
+
+View created.
+
+VDESAI@csload > --
+VDESAI@csload > DELETE FROM run_stats;
+
+0 rows deleted.
+
+VDESAI@csload > COMMIT;
+
+Commit complete.
+
+VDESAI@csload > --
+VDESAI@csload > CREATE OR REPLACE PACKAGE runstats_pkg
+  2  AS
+  3    PROCEDURE rs_start;
+  4    --
+  5    PROCEDURE rs_middle;
+  6    --
+  7    PROCEDURE rs_stop(
+  8  	 p_difference_threshold IN NUMBER DEFAULT 0,
+  9  	 p_output		IN VARCHAR2 DEFAULT NULL);
+ 10    --
+ 11    PROCEDURE version;
+ 12    --
+ 13    PROCEDURE help;
+ 14  END runstats_pkg;
+ 15  /
+
+Package created.
+
+VDESAI@csload > --
+VDESAI@csload > CREATE OR REPLACE PACKAGE BODY runstats_pkg
+  2  AS
+  3    g_start NUMBER;
+  4    g_run1  NUMBER;
+  5    g_run2  NUMBER;
+  6    --
+  7    g_version_txt   VARCHAR2(60)
+  8  	     := 'runstats - Version 1.0, January 29, 2008';
+  9    --
+ 10    -- Procedure to mark the start of the two runs
+ 11    --
+ 12    PROCEDURE rs_start
+ 13    IS
+ 14    BEGIN
+ 15  	 DELETE FROM run_stats;
+ 16  	 --
+ 17  	 INSERT INTO run_stats
+ 18  	 SELECT 'before', stats.*
+ 19  	 FROM stats;
+ 20  	 --
+ 21  	 g_start := DBMS_UTILITY.get_time;
+ 22    END rs_start;
+ 23    --
+ 24    -- Procedure to run between the two runs
+ 25    --
+ 26    PROCEDURE rs_middle
+ 27    IS
+ 28    BEGIN
+ 29  	 g_run1 := (DBMS_UTILITY.get_time - g_start);
+ 30  	 --
+ 31  	 INSERT INTO run_stats
+ 32  	 SELECT 'after 1', stats.*
+ 33  	 FROM stats;
+ 34  	 g_start := DBMS_UTILITY.get_time;
+ 35    END rs_middle;
+ 36    --
+ 37    -- Procedure to run after the two runs
+ 38    --
+ 39    PROCEDURE rs_stop(
+ 40  	 p_difference_threshold IN NUMBER DEFAULT 0,
+ 41  	 p_output		IN VARCHAR2 DEFAULT NULL)
+ 42    IS
+ 43    BEGIN
+ 44  	 g_run2 := (DBMS_UTILITY.get_time - g_start);
+ 45  	 --
+ 46  	 DBMS_OUTPUT.put_line
+ 47  	   ( 'Run1 ran in ' || g_run1 || ' hsecs' );
+ 48  	 DBMS_OUTPUT.put_line
+ 49  	   ( 'Run2 ran in ' || g_run2 || ' hsecs' );
+ 50  	 DBMS_OUTPUT.put_line
+ 51  	   ( 'run 1 ran in ' || ROUND(g_run1/g_run2*100,2) ||
+ 52  	     '% of the time' );
+ 53  	 DBMS_OUTPUT.put_line( CHR(9) );
+ 54  	 --
+ 55  	 INSERT INTO run_stats
+ 56  	 SELECT 'after 2', stats.*
+ 57  	 FROM stats;
+ 58  	 --
+ 59  	 DBMS_OUTPUT.put_line
+ 60  	 ( rpad( 'Name', 40 ) || lpad( 'Run1', 12 ) ||
+ 61  	   lpad( 'Run2', 12 ) || lpad( 'Diff', 12 ) );
+ 62  	 --
+ 63  	 -- Output choice
+ 64  	 --
+ 65  	 IF p_output = 'WORKLOAD' THEN
+ 66  	   FOR x IN
+ 67  	   ( SELECT
+ 68  	       RPAD( a.name, 40 ) ||
+ 69  	       TO_CHAR( b.value-a.value, '999,999,999' ) ||
+ 70  	       TO_CHAR( c.value-b.value, '999,999,999' ) ||
+ 71  	       TO_CHAR( ( (c.value-b.value)-(b.value-a.value)), '999,999,999' ) data
+ 72  	     FROM
+ 73  	       run_stats a,
+ 74  	       run_stats b,
+ 75  	       run_stats c
+ 76  	     WHERE
+ 77  		a.name = b.name
+ 78  		AND b.name = c.name
+ 79  		AND a.runid = 'before'
+ 80  		AND b.runid = 'after 1'
+ 81  		AND c.runid = 'after 2'
+ 82  		AND ABS( (c.value-b.value) - (b.value-a.value) )
+ 83  		  > p_difference_threshold
+ 84  		AND c.name IN
+ 85  		 (
+ 86  		   'STAT...Elapsed Time',
+ 87  		   'STAT...DB Time',
+ 88  		   'STAT...CPU used by this session',
+ 89  		   'STAT...parse time cpu',
+ 90  		   'STAT...recursive cpu usage',
+ 91  		   'STAT...session logical reads',
+ 92  		   'STAT...physical reads',
+ 93  		   'STAT...physical reads cache',
+ 94  		   'STAT...physical reads direct',
+ 95  		   'STAT...sorts (disk)',
+ 96  		   'STAT...sorts (memory)',
+ 97  		   'STAT...sorts (rows)',
+ 98  		   'STAT...queries parallelized',
+ 99  		   'STAT...redo size',
+100  		   'STAT...user commits'
+101  		 )
+102  	      ORDER BY
+103  		ABS( (c.value-b.value)-(b.value-a.value))
+104  	   ) LOOP
+105  	     DBMS_OUTPUT.put_line( x.data );
+106  	   END LOOP;
+107  	 ELSE
+108  	   -- Assume the default of NULL, all stats will be displayed
+109  	   FOR x IN
+110  	   ( SELECT
+111  	       RPAD( a.name, 40 ) ||
+112  	       TO_CHAR( b.value-a.value, '999,999,999' ) ||
+113  	       TO_CHAR( c.value-b.value, '999,999,999' ) ||
+114  	       TO_CHAR( ( (c.value-b.value)-(b.value-a.value)), '999,999,999' ) data
+115  	     FROM
+116  	       run_stats a,
+117  	       run_stats b,
+118  	       run_stats c
+119  	     WHERE
+120  		a.name = b.name
+121  		AND b.name = c.name
+122  		AND a.runid = 'before'
+123  		AND b.runid = 'after 1'
+124  		AND c.runid = 'after 2'
+125  		AND ABS( (c.value-b.value) - (b.value-a.value) )
+126  		  > p_difference_threshold
+127  	      ORDER BY
+128  		ABS( (c.value-b.value)-(b.value-a.value))
+129  	   ) LOOP
+130  	     DBMS_OUTPUT.put_line( x.data );
+131  	   END LOOP;
+132  	 END IF;
+133  	 --
+134  	 DBMS_OUTPUT.put_line( CHR(9) );
+135  	 DBMS_OUTPUT.put_line
+136  	   ( 'Run1 latches total versus runs -- difference and pct' );
+137  	 DBMS_OUTPUT.put_line
+138  	   ( lpad( 'Run1', 12 ) || lpad( 'Run2', 12 ) ||
+139  	     lpad( 'Diff', 12 ) || lpad( 'Pct', 10 ) );
+140  	 --
+141  	 FOR x IN
+142  	 ( SELECT
+143  	     TO_CHAR( run1, '999,999,999' ) ||
+144  	     TO_CHAR( run2, '999,999,999' ) ||
+145  	     TO_CHAR( diff, '999,999,999' ) ||
+146  	     TO_CHAR( round( run1/run2*100,2 ), '99,999.99' ) || '%' data
+147  	   FROM
+148  	     (
+149  	       SELECT
+150  		 SUM(b.value-a.value) run1,
+151  		 SUM(c.value-b.value) run2,
+152  		 SUM( (c.value-b.value)-(b.value-a.value)) diff
+153  	       FROM
+154  		 run_stats a,
+155  		 run_stats b,
+156  		 run_stats c
+157  	       WHERE
+158  		 a.name = b.name
+159  		 AND b.name = c.name
+160  		 AND a.runid = 'before'
+161  		 AND b.runid = 'after 1'
+162  		 AND c.runid = 'after 2'
+163  		 AND a.name like 'LATCH%'
+164  	     )
+165  	 ) LOOP
+166  	   DBMS_OUTPUT.put_line( x.data );
+167  	 END LOOP;
+168    END rs_stop;
+169    --
+170    -- Display version
+171    --
+172    PROCEDURE version
+173    IS
+174    --
+175    BEGIN
+176  	 IF LENGTH(g_version_txt) > 0 THEN
+177  	   dbms_output.put_line(' ');
+178  	   dbms_output.put_line(g_version_txt);
+179  	 END IF;
+180    --
+181    END version;
+182    --
+183    -- Display help
+184    --
+185    PROCEDURE help
+186    IS
+187    --
+188    -- Lists help menu
+189    --
+190    BEGIN
+191  	 DBMS_OUTPUT.put_line(CHR(9));
+192  	 DBMS_OUTPUT.PUT_LINE(g_version_txt);
+193  	 DBMS_OUTPUT.put_line(CHR(9));
+194  	 DBMS_OUTPUT.PUT_LINE('Procedure rs_start');
+195  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'Run to mark the start of the test');
+196  	 DBMS_OUTPUT.put_line(CHR(9));
+197  	 DBMS_OUTPUT.PUT_LINE('Procedure rs_middle');
+198  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'Run to mark the middle of the test');
+199  	 DBMS_OUTPUT.put_line(CHR(9));
+200  	 DBMS_OUTPUT.PUT_LINE('Procedure rs_stop');
+201  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'Run to mark the end of the test');
+202  	 DBMS_OUTPUT.put_line(CHR(9));
+203  	 DBMS_OUTPUT.PUT_LINE('Parameters:');
+204  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'p_difference_threshold - Controls the output. Only stats greater');
+205  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'than p_difference_threshold will be displayed.');
+206  	 DBMS_OUTPUT.put_line(CHR(9));
+207  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'p_output - Controls stats displayed.');
+208  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'  Default is NULL, all stats displayed.');
+209  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'  WORKLOAD, only workload related stats are displayed.');
+210  	 --
+211  	 DBMS_OUTPUT.put_line(CHR(9));
+212  	 DBMS_OUTPUT.PUT_LINE('Example:');
+213  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'Add the following calls to your test code:');
+214  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'    exec runStats_pkg.rs_start;');
+215  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'    exec runStats_pkg.rs_middle;');
+216  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'    exec runStats_pkg.rs_stop;');
+217  	 --
+218  	 DBMS_OUTPUT.put_line(CHR(9));
+219  	 DBMS_OUTPUT.PUT_LINE('NOTE: In SQL*Plus set the following for best results:');
+220  	 DBMS_OUTPUT.put_line(CHR(9));
+221  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'Before 10g:   SET SERVEROUTPUT ON SIZE 1000000');
+222  	 DBMS_OUTPUT.PUT_LINE(CHR(9)||'10g or later: SET SERVEROUTPUT ON');
+223    END help;
+224    --
+225  END runstats_pkg;
+226  /
+
+Package body created.
+
+VDESAI@csload > --
+VDESAI@csload > -- Grant privileges on runstats objects
+VDESAI@csload > --
+VDESAI@csload > SET escape "^";
+VDESAI@csload > CREATE PUBLIC SYNONYM runstats_pkg FOR &runstats_usr^.runstats_pkg;
+old   1: CREATE PUBLIC SYNONYM runstats_pkg FOR &runstats_usr^.runstats_pkg
+new   1: CREATE PUBLIC SYNONYM runstats_pkg FOR vdesai@csload.runstats_pkg
+
+Synonym created.
+
+VDESAI@csload > GRANT EXECUTE ON runstats_pkg TO PUBLIC;
+
+Grant succeeded.
+
+VDESAI@csload > --
+VDESAI@csload > EXIT;

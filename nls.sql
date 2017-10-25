@@ -1,0 +1,1 @@
+alter session set nls_date_format='MM/DD/YY HH24:MI:SS';

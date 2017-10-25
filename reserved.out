@@ -1,0 +1,17 @@
+
+Shared
+  Pool           Failed         Reserved         Reserved         Reserved
+  Miss             Size       Free Space              Max              Avg
+------ ---------------- ---------------- ---------------- ----------------
+     0                0       31,481,104          839,496          767,832
+
+
+                                          Reserved
+        Reserved            Total             Area          Size of
+            Used         Requests           Misses        Last Miss
+---------------- ---------------- ---------------- ----------------
+      33,134,312                0                0                0
+
+
+no rows selected
+
